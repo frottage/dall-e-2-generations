@@ -1,2 +1,59 @@
 These are generations from DALL-E-2.
 I believe that OpenAI owns these, according to their current policy.
+
+** Commands used
+#+BEGIN_SRC sh -n :sps bash :async :results none
+  ls | im-convert-args-to-jpg
+#+END_SRC
+
+=im-convert-args-to-jpg=
+
+#+BEGIN_SRC bash -n :i bash :async :results verbatim code
+  #!/bin/bash
+  export TTY
+  
+  set -xv
+  
+  convert_fp() {
+      fp="$1"
+  
+      rp="$(realpath "$fp")"
+      dn="$(dirname "$rp")"
+      fn="$(basename -- "$rp")"
+      mant="${fn%.*}"
+      ext="${fn##*.}"
+  
+      case "$ext" in
+          jpg) {
+              :
+          }
+          ;;
+  
+          *) {
+              :
+              convert "$fn" "${mant}.jpg"
+          }
+          ;;
+      esac
+  }
+  
+  stdin_exists() {
+      {
+      ! [ -t 0 ] && \
+      ! test "$(readlink /proc/$$/fd/0)" = /dev/null  && \
+      ! test "$(readlink /proc/$$/fd/0)" = "$(readlink /proc/$$/fd/1)"
+      # stdin may be redirected to the tty, but  will continue to say false (due to a bash bug)
+      # So test to make sure 0 does not point to 1
+      } &>/dev/null
+  }
+  
+  if stdin_exists; then
+      awk1 | while IFS=$'\n' read -r line; do
+          convert_fp "$line"
+      done
+  else
+      for fp in $@; do 
+          convert_fp "$fp"
+      done
+  fi
+#+END_SRC
